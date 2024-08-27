@@ -1,5 +1,8 @@
 # pymongo-api
 
+## Схема проекта
+
+![task drawio](https://github.com/user-attachments/assets/b2a83272-2893-4683-ace4-1009f7ffc68a)
 
 ## Как запустить
 
