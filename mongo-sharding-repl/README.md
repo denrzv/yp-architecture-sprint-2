@@ -32,7 +32,7 @@ docker compose up -d
 
 ### Если вы запускаете проект на локальной машине
 
-Откройте в браузере [Test Endpoint](http://localhost:8080)
+Откройте в браузере <a href="http://localhost:8080" target="_blank">Test Endpoint</a>
 
 ### Если вы запускаете проект на предоставленной виртуальной машине
 
