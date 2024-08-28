@@ -15,7 +15,6 @@ rs.initiate({
     { _id: 2, host: "configSrv3:27019" }
   ]
 })
-exit()
 EOF
 
 sleep 5
@@ -31,7 +30,6 @@ rs.initiate({
     { _id: 0, host: "shard1:27020" }
   ]
 })
-exit()
 EOF
 
 docker compose exec -T shard2 mongosh --port 27021 --quiet <<EOF &
@@ -41,7 +39,6 @@ rs.initiate({
     { _id: 0, host: "shard2:27021" }
   ]
 })
-exit()
 EOF
 
 wait
@@ -57,11 +54,7 @@ sh.addShard("shard1/shard1:27020")
 sh.addShard("shard2/shard2:27021")
 sh.enableSharding("somedb")
 sh.shardCollection("somedb.helloDoc", {"name" : "hashed"})
-var bulk = db.helloDoc.initializeUnorderedBulkOp();
-for(var i = 0; i < 1000; i++) {
-  bulk.insert({age:i, name:"ly"+i});
-}
-bulk.execute();
+use somedb
+for(var i = 0; i < 1000; i++) db.helloDoc.insert({age:i, name:"ly"+i})
 db.helloDoc.countDocuments()
-exit()
 EOF
