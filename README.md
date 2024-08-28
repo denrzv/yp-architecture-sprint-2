@@ -2,7 +2,7 @@
 
 ## Финальная схема проекта
 
-
+![task drawio](https://github.com/user-attachments/assets/260bbc42-26a8-485d-a450-717373d18693)
 
 ## Как запустить
 
