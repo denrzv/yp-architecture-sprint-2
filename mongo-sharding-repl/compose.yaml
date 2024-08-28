@@ -67,14 +67,14 @@ services:
       interval: 5s
       start_period: 10s
 
-  shard1:
+  shard1_1:
     image: dh-mirror.gitverse.ru/mongo:latest
-    container_name: shard1
+    container_name: shard1_1
     restart: always
     networks:
       app-network:
     volumes:
-      - shard1-data:/data/db
+      - shard1_1-data:/data/db
     command:
       [
         "--shardsvr",
@@ -88,15 +88,60 @@ services:
       test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
-
-  shard2:
+      
+  shard1_2:
     image: dh-mirror.gitverse.ru/mongo:latest
-    container_name: shard2
+    container_name: shard1_2
     restart: always
     networks:
       app-network:
     volumes:
-      - shard2-data:/data/db
+      - shard1_2-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27120"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  shard1_3:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: shard1_3
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - shard1_3-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27220"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+
+  shard2_1:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: shard2_1
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - shard2_1-data:/data/db
     command:
       [
         "--shardsvr",
@@ -110,10 +155,54 @@ services:
       test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
-  
-  mongos_router:
+      
+  shard2_2:
     image: dh-mirror.gitverse.ru/mongo:latest
-    container_name: mongos_router
+    container_name: shard2_2
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - shard2_2-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27121"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+      
+  shard2_3:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: shard2_3
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - shard2_3-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27221"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+  
+  mongos_router1:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: mongos_router1
     restart: always
     depends_on:
       - configSrv1
@@ -137,20 +226,47 @@ services:
       interval: 5s
       start_period: 10s
 
+  mongos_router2:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: mongos_router2
+    restart: always
+    depends_on:
+      - configSrv1
+      - configSrv2
+      - configSrv3
+    ports:
+      - "27023:27023"
+    networks:
+      app-network:
+    command:
+      [
+        "mongos",
+        "--configdb", 
+        "configReplSet/configSrv1:27017,configSrv2:27018,configSrv3:27019", 
+        "--bind_ip_all",
+        "--port",
+        "27023"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
   pymongo_api:
     container_name: pymongo_api
     build: 
       context: ../api_app
-      dockerfile: ../Dockerfile
-    image: kazhem/pymongo_api:1.0.0
+      dockerfile: Dockerfile
+    #image: kazhem/pymongo_api:1.0.0
     depends_on:
-      - mongos_router
+      - mongos_router1
+      - mongos_router2
     ports:
       - 8080:8080
     networks:
       app-network:
     environment:
-      MONGODB_URL: "mongodb://mongos_router:27022"
+      MONGODB_URL: "mongodb://mongos_router1:27022,mongos_router2:27023"
       MONGODB_DATABASE_NAME: "somedb"
 
 networks:
@@ -161,5 +277,9 @@ volumes:
   config1-data:
   config2-data:
   config3-data:
-  shard1-data:
-  shard2-data:
+  shard1_1-data:
+  shard1_2-data:
+  shard1_3-data:
+  shard2_1-data:
+  shard2_2-data:
+  shard2_3-data:
