@@ -1,12 +1,12 @@
 # pymongo-api
 
-## Финальная схема проекта
+## Схема проекта
 
-![task drawio](https://github.com/user-attachments/assets/260bbc42-26a8-485d-a450-717373d18693)
+![task drawio](https://github.com/user-attachments/assets/b2a83272-2893-4683-ace4-1009f7ffc68a)
 
 ## Как запустить
 
-Запускаем mongodb и приложение
+Запускаем шардированный кластер mongodb и приложение
 
 ```shell
 docker compose up -d
@@ -20,9 +20,18 @@ docker compose up -d
 
 ## Как проверить
 
+### Консоль
+
+При запуске скрипта будет выведено количество документов в БД:
+
+```shell
+[direct: mongos] test> 1000
+[direct: mongos] test> 
+```
+
 ### Если вы запускаете проект на локальной машине
 
-Откройте в браузере http://localhost:8080
+Откройте в браузере [Test Endpoint](http://localhost:8080)
 
 ### Если вы запускаете проект на предоставленной виртуальной машине
 
@@ -37,3 +46,9 @@ curl --silent http://ifconfig.me
 ## Доступные эндпоинты
 
 Список доступных эндпоинтов, swagger http://<ip виртуальной машины>:8080/docs
+
+## Выключение
+
+```shell
+docker compose down -v
+```
