@@ -1,0 +1,165 @@
+name: mongo-sharding-repl
+
+services:
+  configSrv1:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: configSrv1
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - config1-data:/data/db
+    command:
+      [
+        "--configsvr",
+        "--replSet",
+        "configReplSet",
+        "--bind_ip_all",
+        "--port",
+        "27017"
+      ] 
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+      
+  configSrv2:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: configSrv2
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - config2-data:/data/db
+    command:
+      [
+        "--configsvr",
+        "--replSet",
+        "configReplSet",
+        "--bind_ip_all",
+        "--port",
+        "27018"
+      ] 
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  configSrv3:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: configSrv3
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - config3-data:/data/db
+    command:
+      [
+        "--configsvr",
+        "--replSet",
+        "configReplSet",
+        "--bind_ip_all",
+        "--port",
+        "27019"
+      ] 
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  shard1:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: shard1
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - shard1-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27020"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  shard2:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: shard2
+    restart: always
+    networks:
+      app-network:
+    volumes:
+      - shard2-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27021"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+  
+  mongos_router:
+    image: dh-mirror.gitverse.ru/mongo:latest
+    container_name: mongos_router
+    restart: always
+    depends_on:
+      - configSrv1
+      - configSrv2
+      - configSrv3
+    ports:
+      - "27022:27022"
+    networks:
+      app-network:
+    command:
+      [
+        "mongos",
+        "--configdb", 
+        "configReplSet/configSrv1:27017,configSrv2:27018,configSrv3:27019", 
+        "--bind_ip_all",
+        "--port",
+        "27022"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  pymongo_api:
+    container_name: pymongo_api
+    build: 
+      context: ../api_app
+      dockerfile: ../Dockerfile
+    image: kazhem/pymongo_api:1.0.0
+    depends_on:
+      - mongos_router
+    ports:
+      - 8080:8080
+    networks:
+      app-network:
+    environment:
+      MONGODB_URL: "mongodb://mongos_router:27022"
+      MONGODB_DATABASE_NAME: "somedb"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  config1-data:
+  config2-data:
+  config3-data:
+  shard1-data:
+  shard2-data:
